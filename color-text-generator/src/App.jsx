@@ -92,63 +92,45 @@ const DiscordTextGenerator = () => {
 
   const copyToClipboardWithANSI = () => {
     const textarea = contentEditableRef.current;
-  
-    const convertToANSI = (node) => {
-      let result = '';
-      
-      Array.from(node.childNodes).forEach(childNode => {
-        if (childNode.nodeType === Node.TEXT_NODE) {
-          result += childNode.textContent;
-        } else if (childNode.nodeType === Node.ELEMENT_NODE) {
-          let ansiCodes = [];
-          
-          // Detect foreground color
-          if (childNode.style.color) {
-            const colorCode = Object.entries(ANSI_CODES)
-              .find(([code, info]) => 
-                info.color && info.color.toLowerCase() === childNode.style.color.toLowerCase() && 
-                code.startsWith('3')  // Ensure it's a foreground color
-              )?.[0];
-            
-            if (colorCode) ansiCodes.push(colorCode);
-          }
-          
-          // Detect background color
-          if (childNode.style.backgroundColor) {
-            const bgColorCode = Object.entries(ANSI_CODES)
-              .find(([code, info]) => 
-                info.color && info.color.toLowerCase() === childNode.style.backgroundColor.toLowerCase() && 
-                code.startsWith('4')  // Ensure it's a background color
-              )?.[0];
-  
-            if (bgColorCode) ansiCodes.push(bgColorCode);
-          }
-  
-          // Detect bold and underline styles
-          if (childNode.style.fontWeight === 'bold') ansiCodes.push('1');
-          if (childNode.style.textDecoration === 'underline') ansiCodes.push('4');
-  
-          // Apply ANSI codes
-          if (ansiCodes.length) {
-            result += `\u001b[${ansiCodes.join(';')}m${childNode.textContent}\u001b[0m`;
-          } else {
-            result += childNode.textContent;
-          }
+
+    const nodesToANSI = (nodes, states) => {
+        let text = "";
+        for (const node of nodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                text += node.textContent;
+                continue;
+            }
+            if (node.nodeName === "BR") {
+                text += "\n";
+                continue;
+            }
+            const ansiCode = +(node.className.split("-")[1]);
+            const newState = { ...states.at(-1) }; // Create a copy of the previous state
+
+            if (ansiCode < 30) newState.st = ansiCode;
+            if (ansiCode >= 30 && ansiCode < 40) newState.fg = ansiCode;
+            if (ansiCode >= 40) newState.bg = ansiCode;
+
+            states.push(newState);
+            text += `\x1b[${newState.st};${(ansiCode >= 40) ? newState.bg : newState.fg}m`;
+            text += nodesToANSI(node.childNodes, states);
+            states.pop();
+            text += `\x1b[0m`;
+            if (states.at(-1).fg !== 2) text += `\x1b[${states.at(-1).st};${states.at(-1).fg}m`;
+            if (states.at(-1).bg !== 2) text += `\x1b[${states.at(-1).st};${states.at(-1).bg}m`;
         }
-      });
-  
-      return result;
+        return text;
     };
-  
-    const ansiText = convertToANSI(textarea);
+
+    const ansiText = nodesToANSI(textarea.childNodes, [{ fg: 2, bg: 2, st: 2 }]);
     const formattedText = `\`\`\`ansi\n${ansiText}\n\`\`\``;
-    
+
     navigator.clipboard.writeText(formattedText).then(() => {
-      alert('Copied to clipboard in ANSI format!');
+        alert('Copied to clipboard in ANSI format!');
     }).catch(err => {
-      console.error('Failed to copy:', err);
+        console.error('Failed to copy:', err);
     });
-  };
+};
 
   const handleTooltipShow = (ansiCode, event) => {
     const tooltipText = ANSI_CODES[ansiCode]?.name || '';
