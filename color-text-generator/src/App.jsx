@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Container, Text, Button, Group, Stack } from "@mantine/core";
 
-// ANSI Code Mappings from the original implementation
 const ANSI_CODES = {
   // Foreground Colors
   30: { color: "#4f545c", name: "Dark Gray (33%)" },
@@ -42,7 +41,6 @@ const DiscordTextGenerator = () => {
   const contentEditableRef = useRef(null);
 
   const sanitizeHTML = (html) => {
-    // Remove any potentially dangerous tags, but keep styling
     return html
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
       .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
@@ -51,10 +49,10 @@ const DiscordTextGenerator = () => {
 
   const handleStyleApplication = (ansiCode) => {
     const selection = window.getSelection();
-    console.log("Selection:", selection.toString()); // Debug log
+    console.log("Selection:", selection.toString()); 
   
     if (!selection.toString().trim()) {
-      console.log("No text selected"); // Debug log
+      console.log("No text selected");
       return;
     }
   
@@ -68,41 +66,33 @@ const DiscordTextGenerator = () => {
       // Underline
       const wrapper = document.createElement("div");
       wrapper.style.textDecoration = 'underline';
-      wrapper.style.display = 'inline'; // Ensure it flows with text
+      wrapper.style.display = 'inline'; 
       wrapper.textContent = selectedText;
   
       range.deleteContents();
       range.insertNode(wrapper);
   
       window.getSelection().removeAllRanges();
-      return; // Important: Return to prevent further span processing
+      return; 
     }
   
-    // Create a new span with inline styles instead of class for other styles
     const span = document.createElement("span");
   
-    // Apply color based on ANSI code
     if (ansiCode.startsWith("3")) {
-      // Foreground color
       span.style.color = ANSI_CODES[ansiCode].color;
     } else if (ansiCode.startsWith("4")) {
-      // Background color
       span.style.backgroundColor = ANSI_CODES[ansiCode].color;
     } else if (ansiCode === "1") {
-      // Bold
       span.style.fontWeight = "bold";
     }
   
     span.textContent = selectedText;
   
-    // Replace the selected text with the styled span
     range.deleteContents();
     range.insertNode(span);
   
-    // Update state
     setStyledSegments((prev) => [...prev, { text: selectedText, ansiCode }]);
   
-    // Clear selection after styling
     window.getSelection().removeAllRanges();
   };
 
@@ -121,7 +111,7 @@ const DiscordTextGenerator = () => {
           continue;
         }
         const ansiCode = +node.className.split("-")[1];
-        const newState = { ...states.at(-1) }; // Create a copy of the previous state
+        const newState = { ...states.at(-1) }; 
 
         if (ansiCode < 30) newState.st = ansiCode;
         if (ansiCode >= 30 && ansiCode < 40) newState.fg = ansiCode;
@@ -195,7 +185,6 @@ const DiscordTextGenerator = () => {
     );
   };
 
-  // Handle initial text and prevent React warning
   useEffect(() => {
     if (contentEditableRef.current) {
       contentEditableRef.current.innerHTML = text;
@@ -270,7 +259,6 @@ const DiscordTextGenerator = () => {
             ref={contentEditableRef}
             contentEditable
             onInput={(e) => {
-              // Sanitize input and update text
               const sanitizedHTML = sanitizeHTML(e.target.innerHTML);
               e.target.innerHTML = sanitizedHTML;
               setText(e.target.innerText);
