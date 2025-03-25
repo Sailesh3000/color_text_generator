@@ -35,7 +35,7 @@ const ANSI_CODES = {
 };
 
 const DiscordTextGenerator = () => {
-  const [text, setText] = useState('Welcome to Rebane\'s Discord Colored Text Generator!');
+  const [text, setText] = useState('Welcome to Discord Colored Text Generator!');
   const [styledSegments, setStyledSegments] = useState([]);
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
   const contentEditableRef = useRef(null);
@@ -189,7 +189,7 @@ const DiscordTextGenerator = () => {
       <Container size="sm">
         <Stack gap="lg">
           <h1>
-            Rebane's <span style={{color: '#5865F2'}}>Discord</span> Colored Text Generator
+            <span style={{color: '#5865F2'}}>Discord</span> Colored Text Generator
           </h1>
 
           <Text size="sm" c="dimmed" mb="md">
